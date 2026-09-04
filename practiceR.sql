@@ -172,3 +172,91 @@ GROUP BY
     p.last_name,
     t.person_id
 ORDER BY p.person_id;
+
+--AGGREGATION + JOIN
+--Find the total number of transactions and total amount per city.
+SELECT 
+    a.city,
+    COUNT(b.person_id) AS total_transactions,
+    SUM(b.amount) AS total_amount
+FROM dbo.people AS a
+JOIN dbo.transactions AS b
+    ON a.person_id = b.person_id
+GROUP BY 
+    a.city;
+
+--Find each person's largest single transaction (MAX amount).
+SELECT 
+    a.first_name,
+    a.last_name,
+    MAX(b.amount) AS largest_amount
+FROM dbo.people AS a
+INNER JOIN dbo.transactions AS b
+    ON a.person_id = b.person_id
+GROUP BY 
+    a.first_name,
+    a.last_name;
+
+--Find each person's smallest (most negative) transaction.
+SELECT 
+    a.first_name,
+    a.last_name,
+    MIN(b.amount) AS smallest_amount
+FROM dbo.people AS a
+INNER JOIN dbo.transactions AS b
+    ON a.person_id = b.person_id
+GROUP BY 
+    a.first_name,
+    a.last_name;
+
+--Rank people by total transaction volume (sum of absolute amount) from highest to lowest.
+SELECT 
+    a.first_name,
+    a.last_name,
+    SUM(ABS(b.amount)) AS total_volume
+FROM dbo.people AS a
+INNER JOIN dbo.transactions AS b
+    ON a.person_id = b.person_id
+GROUP BY 
+    a.first_name,
+    a.last_name
+ORDER BY 
+    total_volume DESC;
+
+--FILTERING AND JOIN
+--Find all people who made at least one transaction over 10,000.
+SELECT DISTINCT
+a.first_name,
+a.last_name, 
+b.amount
+FROM dbo.people As A
+JOIN dbo.transactions As B
+ON a.person_id = b.person_id
+WHERE b.amount > 10000;
+
+--Find all people who have made both a deposit AND a withdrawal.
+SELECT 
+    a.first_name,
+    a.last_name
+FROM dbo.people AS a
+WHERE EXISTS (
+    SELECT 1 FROM dbo.transactions AS t 
+    WHERE t.person_id = a.person_id AND t.transaction_type = 'Deposit'
+)
+AND EXISTS (
+    SELECT 1 FROM dbo.transactions AS t 
+    WHERE t.person_id = a.person_id AND t.transaction_type = 'Withdrawal'
+);
+
+--Find all transactions made by people NOT living in Cape Town.
+SELECT 
+    b.transaction_id,
+    b.amount,
+    b.transaction_type,
+    a.first_name,
+    a.last_name,
+    a.city
+FROM dbo.people AS a
+INNER JOIN dbo.transactions AS b
+    ON a.person_id = b.person_id
+WHERE a.city <> 'Cape Town';
